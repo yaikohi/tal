@@ -1,0 +1,210 @@
+clusterName: home-cluster
+talosVersion: v1.7.1
+kubernetesVersion: v1.27.0
+endpoint: https://192.168.200.10:6443
+domain: ${myDomainName}
+allowSchedulingOnMasters: true
+additionalMachineCertSans:
+  - 192.168.200.10
+additionalApiServerCertSans:
+  - home-cluster.local
+clusterPodNets:
+  - 10.244.0.0/16
+clusterSvcNets:
+  - 10.96.0.0/12
+cniConfig:
+  name: custom
+  urls:
+    - https://raw.githubusercontent.com/bjw-s/home-ops/main/infrastructure/talos/cluster-0/cni/install.yaml
+patches:
+  - |-
+    machine:
+      env:
+        GRPC_GO_LOG_SEVERITY_LEVEL: error
+  - |-
+    apiVersion: v1alpha1
+    kind: UserVolumeConfig
+    name: sata2
+    provisioning:
+      diskSelector:
+        match: disk.transport == "sata"
+      minSize: 100GiB
+  - "@./uservolumeconfig3.yaml"
+nodes:
+  - hostname: kmaster1
+    extensionServices:
+      - name: nut-client
+        configFiles:
+          - content: MONITOR upsmonHost 1 remote pass password
+            mountPath: /usr/local/etc/nut/upsmon.conf
+        environment:
+          - UPS_NAME=ups
+    userVolumes:
+      - name: ceph-data
+        provisioning:
+          diskSelector:
+            match: disk.transport == "nvme"
+          maxSize: 50GiB
+        filesystem:
+          type: xfs
+        encryption:
+          provider: luks2
+          keys:
+            - slot: 0
+              tpm: {}
+            - slot: 1
+              static:
+                passphrase: topsecret
+      - name: sata
+        provisioning:
+          diskSelector:
+            match: disk.transport == "sata"
+          minSize: 100GiB
+    volumes:
+      - name: EPHEMERAL
+        provisioning:
+          diskSelector:
+            match: disk.transport == "nvme"
+          maxSize: 50GiB
+    ingressFirewall:
+      defaultAction: block
+      rules:
+        - name: kubelet-ingress
+          portSelector:
+            ports:
+              - 10250
+            protocol: tcp
+          ingress:
+            - subnet: 172.20.0.0/24
+              except: 172.20.0.1/32
+    ipAddress: 192.168.200.11
+    controlPlane: true
+    machineSpec:
+      mode: metal
+      arch: amd64
+      useUKI: true
+      secureboot: true
+    schematic:
+      overlay:
+        name: rock64
+        image: siderolabs/sbc-rockchip
+      customization:
+        extraKernelArgs:
+          - net.ifnames=0
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/intel-ucode
+            - siderolabs/tailscale
+    machineFiles:
+      - content: |
+          TS_AUTHKEY=123456
+        permissions: 0o644
+        path: /var/etc/tailscale/auth.env
+        op: create
+      - content: "@./tsauth.env"
+        permissions: 0o644
+        path: /var/etc/tailscale2/auth.env
+        op: create
+    installDiskSelector:
+      size: 4GB
+      model: WDC*
+      # TODO: broken since Talos 1.9 and I need to investigate
+      # name: /sys/block/sda/device/name
+      # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
+    nodeLabels:
+      rack: rack1a
+      zone: us-east-1a
+      isSecureBootEnabled: >-
+        {{
+          .MachineConfig.MachineInstall.InstallImage |
+          contains "installer-secureboot"
+        }}
+    nodeAnnotations:
+      rack: rack1a
+      installerUrl: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    nodeTaints:
+      mytaint: mytaints:NoSchedule
+    disableSearchDomain: true
+    kernelModules:
+      - name: br_netfilter
+        parameters:
+          - nf_conntrack_max=131072
+    nameservers:
+      - 1.1.1.1
+      - 8.8.8.8
+    networkInterfaces:
+      - interface: eth0
+        bond:
+          deviceSelectors:
+            - hardwareAddr: "00:50:56:*"
+        addresses:
+          - 192.168.200.11/24
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.200.1
+        wireguard:
+          privateKey: 6NtibgkNWGSLp7ud6NgZr9k3kNhlQiaJCVW6vN+j9UY=
+          listenPort: 51111
+          peers:
+            - publicKey: kyiu4YOZqX+7tY4fdiIRNDe2lSEvlun76EWtD/jP1hU=
+              endpoint: 192.168.1.3:1111
+              allowedIPs:
+                - 192.168.1.0/24
+              persistentKeepaliveInterval: 10s
+      - deviceSelector:
+          hardwareAddr: 00:30:93:12:31:78
+          driver: atlantic
+        addresses:
+          - 10.0.0.10/24
+        mtu: 9000
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 10.0.0.1
+  - hostname: kworker1
+    ipAddress: 192.168.200.13
+    controlPlane: false
+    installDisk: /dev/sdb
+    patches:
+      - |-
+        machine:
+          network:
+            interfaces:
+              - addresses:
+                  - 192.168.200.13/24
+                interface: eth1
+                routes:
+                  - gateway: 192.168.200.1
+                  - network: 0.0.0.0/0
+controlPlane:
+  patches:
+    - |-
+      machine:
+        kubelet:
+          extraArgs:
+            feature-gates: GracefulNodeShutdown=true,MixedProtocolLBService=true
+            rotate-server-certificates: "true"
+    - "@./extraKernelArgs-patch.yaml"
+worker:
+  ingressFirewall:
+    defaultAction: block
+    rules:
+      - name: apid-ingress
+        portSelector:
+          ports:
+            - 50000
+          protocol: tcp
+        ingress:
+          - subnet: 10.96.0.0/12
+  patches:
+    - |-
+      machine:
+        kubelet:
+          extraArgs:
+            feature-gates: GracefulNodeShutdown=false,MixedProtocolLBService=false
+            rotate-server-certificates: "true"
+  schematic:
+    customization:
+      systemExtensions:
+        officialExtensions:
+          - siderolabs/intel-ucode

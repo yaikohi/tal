@@ -1,0 +1,35 @@
+clusterName: yaya
+talosVersion: v1.11.5
+kubernetesVersion: v1.33.6
+endpoint: "https://192.168.20.11:6443" # The VIP or LoadBalancer IP
+
+nodes:
+  - hostname: c-01
+    ipAddress: 192.168.20.11
+    controlPlane: true
+    installDisk: /dev/sda
+    # Proxmox-specific machine specs (optional, mainly for documentation or custom scripts)
+    machineSpec:
+      mode: metal
+      secureboot: false
+      target_node: dusk
+      vmid: 6011
+      mac: "BC:25:11:00:00:11"
+
+  - hostname: w-01
+    ipAddress: 192.168.20.21
+    controlPlane: false
+    installDisk: /dev/sda
+    machineSpec:
+      target_node: dusk
+      vmid: 6021
+      mac: "BC:25:11:00:00:21"
+
+  - hostname: w-02
+    ipAddress: 192.168.20.22
+    controlPlane: false
+    installDisk: /dev/sda
+    machineSpec:
+      target_node: dusk
+      vmid: 6022
+      mac: "BC:25:11:00:00:22"
