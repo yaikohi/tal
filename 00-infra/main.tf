@@ -133,3 +133,8 @@ resource "local_file" "kubeconfig" {
   content  = resource.talos_cluster_kubeconfig.kubeconfig.kubeconfig_raw
   filename = "${path.module}/kubeconfig"
 }
+
+# Output the path so we know where it went
+output "kubeconfig_path" {
+  value = abspath(resource.local_file.kubeconfig.filename)
+}
