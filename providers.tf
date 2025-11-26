@@ -2,7 +2,7 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.85.1" # Check for latest
+      version = "0.87.0" # Check for latest
     }
     talos = {
       source  = "siderolabs/talos"
@@ -23,10 +23,10 @@ provider "proxmox" {
   password = var.PROXMOX_VE_PASSWORD
   insecure = true
   ssh {
-      agent       = true
-      username    = "root"
-      private_key = file("~/.ssh/proxmox-pve") # <--- Point to the private key
-    }
+    agent       = true
+    username    = "root"
+    private_key = file("~/.ssh/proxmox-pve") # <--- Point to the private key
+  }
 }
 
 provider "talos" {
