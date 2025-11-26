@@ -2,7 +2,7 @@ terraform {
   required_providers {
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.87.0" # Check for latest
+      version = "0.87.0"
     }
     talos = {
       source  = "siderolabs/talos"
@@ -16,8 +16,6 @@ terraform {
 }
 
 provider "proxmox" {
-  # Configuration options are read from Environment Variables
-  # (PROXMOX_VE_ENDPOINT, PROXMOX_VE_API_TOKEN, etc.)
   endpoint = var.PROXMOX_VE_ENDPOINT
   username = var.PROXMOX_VE_USERNAME
   password = var.PROXMOX_VE_PASSWORD
@@ -29,9 +27,7 @@ provider "proxmox" {
   }
 }
 
-provider "talos" {
-  # No specific config needed here, it acts as a client
-}
+provider "talos" {}
 
 provider "helm" {
   kubernetes = {

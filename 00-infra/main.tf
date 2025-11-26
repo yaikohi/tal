@@ -14,9 +14,8 @@ locals {
 
   nodes = {
     for node in local.talconfig.nodes : node.hostname => {
-      ip = node.ipAddress
-      # specific PVE node logic (see explanation below)
-      target_node = try(node.machineSpec.target_node, "dusk")
+      ip          = node.ipAddress
+      target_node = var.PROXMOX_VE_NODENAME
       type        = node.controlPlane ? "controlplane" : "worker"
       vm_id       = try(node.machineSpec.vmid, null)
       mac         = try(node.machineSpec.mac, null)
@@ -37,11 +36,8 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   machine       = "q35"
   scsi_hardware = "virtio-scsi-single"
   on_boot       = true
-
-  # Basic VM Specs
-  # boot_order = ["ide0", "scsi0"]
-  boot_order = ["scsi0", "ide0"]
-  started    = true
+  boot_order    = ["scsi0", "ide0"]
+  started       = true
   agent {
     enabled = true
     trim    = true
@@ -91,7 +87,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
     ip_config {
       ipv4 {
         address = "${each.value.ip}/24"
-        gateway = "192.168.20.1" # <--- TODO: Update your Gateway
+        gateway = "192.168.20.1"
       }
     }
   }
@@ -100,7 +96,6 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
 ################################################################################
 # 2. TALOS CONFIGURATION APPLY
 ################################################################################
-
 resource "talos_machine_configuration_apply" "node_config" {
   for_each                    = local.nodes
   client_configuration        = local.client_config
@@ -109,20 +104,20 @@ resource "talos_machine_configuration_apply" "node_config" {
   endpoint                    = each.value.ip
   depends_on                  = [proxmox_virtual_environment_vm.talos_node]
 }
+
 ################################################################################
 # 3. TALOS BOOTSTRAP (Control Plane Only)
 ################################################################################
-
 resource "talos_machine_bootstrap" "bootstrap" {
   node                 = local.nodes["c-01"].ip
   client_configuration = local.client_config
   endpoint             = local.nodes["c-01"].ip
   depends_on           = [talos_machine_configuration_apply.node_config]
 }
+
 ################################################################################
 # 4. KUBECONFIG RETRIEVAL
 ################################################################################
-
 resource "talos_cluster_kubeconfig" "kubeconfig" {
   client_configuration = local.client_config
   node                 = local.nodes["c-01"].ip
@@ -134,7 +129,6 @@ resource "local_file" "kubeconfig" {
   filename = "${path.module}/kubeconfig"
 }
 
-# Output the path so we know where it went
 output "kubeconfig_path" {
   value = abspath(resource.local_file.kubeconfig.filename)
 }
