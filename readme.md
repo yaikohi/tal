@@ -72,3 +72,41 @@ talhelper genconfig
 
 ### To destroy: 
 - `tofu destroy`
+
+
+## Troubleshooting
+
+### talhelper genconfig
+
+```bash
+tralala on  feat/cilium [!?] via 💠 default 
+❯ talhelper genconfig
+2025/11/26 12:16:23 failed to generate talos config: SOPS decryption failed: Error getting data key: 0 successful groups required, got 0
+
+``` 
+
+This means you need to run:
+
+```bash
+export SOPS_AGE_KEY_FILE=$(pwd)/key.txt
+```
+
+then it will work:
+
+```bash
+tralala on  feat/cilium [!?] via 💠 default 
+❯ export SOPS_AGE_KEY_FILE=$(pwd)/key.txt
+
+tralala on  feat/cilium [!?] via 💠 default 
+❯ talhelper genconfig                    
+generated config for c-01 in ./clusterconfig/yaya-c-01.yaml
+generated config for w-01 in ./clusterconfig/yaya-w-01.yaml
+generated config for w-02 in ./clusterconfig/yaya-w-02.yaml
+generated client config in ./clusterconfig/talosconfig
+generated .gitignore file in ./clusterconfig/.gitignore
+
+```
+
+## References
+
+1. GUI for an overview of the cluster; seabird - https://github.com/getseabird/seabird?tab=readme-ov-file
