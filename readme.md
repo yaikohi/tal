@@ -110,3 +110,9 @@ generated .gitignore file in ./clusterconfig/.gitignore
 ## References
 
 1. GUI for an overview of the cluster; seabird - https://github.com/getseabird/seabird?tab=readme-ov-file
+
+2. [github - maor-klir / talos-cluster.md](https://gist.github.com/maor-klir/6b0374386b2e323db4ea7749dacdf08f)
+
+3, [github - dylanbegin / terraform-talos](https://github.com/dylanbegin/terraform-talos)
+
+4. [blog - johanneskueber.com - Use longhorn with talos 1.10 and userVolumes](https://www.johanneskueber.com/posts/longhorn_uservolumes_talos/)
