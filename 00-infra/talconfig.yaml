@@ -29,7 +29,6 @@ nodes:
     machineSpec:
       mode: metal
       secureboot: false
-      target_node: dusk
       vmid: 6011
       mac: "BC:25:11:00:00:11"
 
@@ -38,7 +37,6 @@ nodes:
     controlPlane: false
     installDisk: /dev/sda
     machineSpec:
-      target_node: dusk
       vmid: 6021
       mac: "BC:25:11:00:00:21"
 
@@ -47,7 +45,6 @@ nodes:
     controlPlane: false
     installDisk: /dev/sda
     machineSpec:
-      target_node: dusk
       vmid: 6022
       mac: "BC:25:11:00:00:22"
 
