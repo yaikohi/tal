@@ -40,3 +40,4 @@ kubeconfig.yaml
 .idea/
 out.plan
 .env
+repomix-output.xml
