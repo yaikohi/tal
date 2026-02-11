@@ -39,6 +39,13 @@ nodes:
     machineSpec:
       vmid: 6021
       mac: "BC:25:11:00:00:21"
+    userVolumes:
+      - name: immich-data
+        provisioning:
+          diskSelector:
+            match: disk.transport == "virtio"
+          # This tells Talos to grab the new ~3.8TB disk, ignoring the 20GB OS disk
+          minSize: 3000GiB
 
   - hostname: w-02
     ipAddress: 192.168.20.22

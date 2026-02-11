@@ -1,4 +1,4 @@
-resource "kubernetes_deployment" "nginx" {
+resource "kubernetes_deployment_v1" "nginx" {
   metadata {
     name = "nginx-test"
   }
@@ -25,13 +25,13 @@ resource "kubernetes_deployment" "nginx" {
   }
 }
 
-resource "kubernetes_service" "nginx" {
+resource "kubernetes_service_v1" "nginx" {
   metadata {
     name = "nginx-test"
   }
   spec {
     selector = {
-      app = kubernetes_deployment.nginx.spec[0].selector[0].match_labels.app
+      app = kubernetes_deployment_v1.nginx.spec[0].selector[0].match_labels.app
     }
     port {
       port        = 80
@@ -42,5 +42,5 @@ resource "kubernetes_service" "nginx" {
 }
 
 output "lb_ip" {
-  value = kubernetes_service.nginx.status.0.load_balancer.0.ingress.0.ip
+  value = kubernetes_service_v1.nginx.status.0.load_balancer.0.ingress.0.ip
 }
