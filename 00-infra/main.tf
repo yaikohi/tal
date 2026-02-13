@@ -78,7 +78,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   }
 
   efi_disk {
-    datastore_id = "local-lvm"
+    datastore_id = "fastdata"
     file_format  = "raw"
     type         = "4m"
   }
@@ -90,7 +90,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   }
   # --- INSTALLATION DRIVE (Empty Disk) ---
   disk {
-    datastore_id = "local-lvm"
+    datastore_id = "fastdata"
     interface    = "scsi0"
     size         = 20
     file_format  = "raw"
