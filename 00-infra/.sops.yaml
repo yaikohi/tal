@@ -2,4 +2,4 @@ creation_rules:
   - path_regex: .*\.sops\.yaml$
     key_groups:
       - age:
-          - "age1aw9gk6c3k734q8t9uuta7hskz3et4yucy9h9hy22snmghxh9hynqjtwdtm"
+          - "age1frhe9wnfe6fw5tge87n87gm29n2dlczkncukx7xf37qg9q5fpq4qm0q8e7"
