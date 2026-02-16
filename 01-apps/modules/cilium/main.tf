@@ -3,7 +3,7 @@ resource "helm_release" "cilium" {
   namespace  = "kube-system"
   repository = "https://helm.cilium.io"
   chart      = "cilium"
-  version    = "1.16.1"
+  version    = "1.19.0"
   wait       = true
   timeout    = 600
 
@@ -66,7 +66,8 @@ resource "kubernetes_manifest" "cilium_loadbalancer_ip_pool" {
     spec = {
       blocks = [
         {
-          cidr = var.lb_cidr
+          start = "192.168.20.220"
+          stop  = "192.168.20.250"
         }
       ]
     }
