@@ -44,6 +44,7 @@ kubeconfig.yaml
 out.plan
 .env
 repomix-output.xml
+repomix-output-*.xml
 
 # --- opentofu
 plan.out
