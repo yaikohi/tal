@@ -38,9 +38,10 @@ resource "kubernetes_service" "nginx" {
       target_port = 80
     }
     type = "LoadBalancer"
+    load_balancer_ip = "192.168.20.221"
   }
 }
 
 output "lb_ip" {
-  value = kubernetes_service.nginx.status.0.load_balancer.0.ingress.0.ip
+  value = try(kubernetes_service.nginx.status[0].load_balancer[0].ingress[0].ip, "pending")
 }

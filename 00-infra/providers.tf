@@ -21,9 +21,9 @@ provider "proxmox" {
   password = var.PROXMOX_VE_PASSWORD
   insecure = true
   ssh {
-    agent       = true
-    username    = "root"
-    private_key = file("~/.ssh/proxmox-pve") # <--- Point to the private key
+    agent    = false
+    username = "root"
+    private_key = file("~/.ssh/proxmox-pve")
   }
 }
 
