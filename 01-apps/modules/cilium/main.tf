@@ -3,7 +3,7 @@ resource "helm_release" "cilium" {
   namespace  = "kube-system"
   repository = "https://helm.cilium.io"
   chart      = "cilium"
-  version    = "1.16.1"
+  version    = "1.19.0"
   wait       = true
   timeout    = 600
 
@@ -32,35 +32,46 @@ resource "helm_release" "cilium" {
   ]
 }
 
-resource "terraform_data" "cilium_config" {
-  triggers_replace = [var.lb_cidr]
-  depends_on       = [helm_release.cilium]
-
-  provisioner "local-exec" {
-    command = <<EOT
-cat <<EOF | kubectl --kubeconfig ${var.kubeconfig_path} apply -f -
----
-apiVersion: cilium.io/v2alpha1
-kind: CiliumL2AnnouncementPolicy
-metadata:
-  name: external
-spec:
-  loadBalancerIPs: true
-  interfaces:
-  - ens18
-  nodeSelector:
-    matchExpressions:
-    - key: node-role.kubernetes.io/control-plane
-      operator: DoesNotExist
----
-apiVersion: cilium.io/v2alpha1
-kind: CiliumLoadBalancerIPPool
-metadata:
-  name: external
-spec:
-  blocks:
-  - cidr: ${var.lb_cidr}
-EOF
-EOT
+resource "kubernetes_manifest" "cilium_l2_announcement_policy" {
+  manifest = {
+    apiVersion = "cilium.io/v2alpha1"
+    kind       = "CiliumL2AnnouncementPolicy"
+    metadata = {
+      name = "external"
+    }
+    spec = {
+      loadBalancerIPs = true
+      interfaces      = ["ens18"]
+      nodeSelector = {
+        matchExpressions = [
+          {
+            key      = "node-role.kubernetes.io/control-plane"
+            operator = "DoesNotExist"
+          }
+        ]
+      }
+    }
   }
+
+  depends_on = [helm_release.cilium]
+}
+
+resource "kubernetes_manifest" "cilium_loadbalancer_ip_pool" {
+  manifest = {
+    apiVersion = "cilium.io/v2alpha1"
+    kind       = "CiliumLoadBalancerIPPool"
+    metadata = {
+      name = "external"
+    }
+    spec = {
+      blocks = [
+        {
+          start = "192.168.20.220"
+          stop  = "192.168.20.250"
+        }
+      ]
+    }
+  }
+
+  depends_on = [helm_release.cilium]
 }

@@ -24,7 +24,22 @@ locals {
 }
 
 ################################################################################
-# 1. PROXMOX VM CREATION (bpg/proxmox)
+# 1. DOWNLOAD TALOS ISO FROM URL
+################################################################################
+
+resource "proxmox_virtual_environment_download_file" "talos_iso" {
+  content_type   = "iso"
+  datastore_id   = "local"
+  node_name      = var.PROXMOX_VE_NODENAME
+  url            = "https://factory.talos.dev/image/37a92427f8a50e9bd0b9c42547c9311bdbe4ade8c2dd8716a593b0fa09abf3e7/v1.12.3/metal-amd64.iso"
+  file_name      = "talos-v1.12.3.iso"
+  overwrite      = false
+  verify         = false
+  upload_timeout = 1800
+}
+
+################################################################################
+# 2. PROXMOX VM CREATION (bpg/proxmox)
 ################################################################################
 
 resource "proxmox_virtual_environment_vm" "talos_node" {
@@ -53,7 +68,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   }
 
   memory {
-    dedicated = 4 * 1024
+    dedicated = each.value.type == "worker" ? 8 * 1024 : 4 * 1024
   }
 
   network_device {
@@ -63,19 +78,19 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   }
 
   efi_disk {
-    datastore_id = "local-lvm"
+    datastore_id = "fastdata"
     file_format  = "raw"
     type         = "4m"
   }
 
   # --- ISO CONFIGURATION (Boot Drive) ---
   disk {
-    file_id   = "local:iso/talos-v1.11.5.iso"
+    file_id   = proxmox_virtual_environment_download_file.talos_iso.id
     interface = "ide0"
   }
   # --- INSTALLATION DRIVE (Empty Disk) ---
   disk {
-    datastore_id = "local-lvm"
+    datastore_id = "fastdata"
     interface    = "scsi0"
     size         = 20
     file_format  = "raw"
@@ -94,7 +109,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
 }
 
 ################################################################################
-# 2. TALOS CONFIGURATION APPLY
+# 3. TALOS CONFIGURATION APPLY
 ################################################################################
 resource "talos_machine_configuration_apply" "node_config" {
   for_each                    = local.nodes
@@ -106,7 +121,7 @@ resource "talos_machine_configuration_apply" "node_config" {
 }
 
 ################################################################################
-# 3. TALOS BOOTSTRAP (Control Plane Only)
+# 4. TALOS BOOTSTRAP (Control Plane Only)
 ################################################################################
 resource "talos_machine_bootstrap" "bootstrap" {
   node                 = local.nodes["c-01"].ip
@@ -116,7 +131,7 @@ resource "talos_machine_bootstrap" "bootstrap" {
 }
 
 ################################################################################
-# 4. KUBECONFIG RETRIEVAL
+# 5. KUBECONFIG RETRIEVAL
 ################################################################################
 resource "talos_cluster_kubeconfig" "kubeconfig" {
   client_configuration = local.client_config

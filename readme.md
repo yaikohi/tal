@@ -106,6 +106,43 @@ generated client config in ./clusterconfig/talosconfig
 generated .gitignore file in ./clusterconfig/.gitignore
 
 ```
+# Update /etc/exports to allow both networks
+nano /etc/exports
+# Add: /photos/immich 192.168.10.0/24(rw,sync,no_subtree_check,no_root_squash) 192.168.20.0/24(rw,sync,no_subtree_check,no_root_squash)
+
+# OR just replace the line with both networks:
+sed -i 's|/photos/immich.*|/photos/immich 192.168.10.0/24(rw,sync,no_subtree_check,no_root_squash) 192.168.20.0/24(rw,sync,no_subtree_check,no_root_squash)|' /etc/exports
+
+# Apply changes
+exportfs -ra
+
+# Verify
+showmount -e localhost
+
+## Infrastructure for Applications
+
+### NFS Storage and Immich Setup
+
+The cluster is configured with NFS-based persistent storage for applications like Immich, PostgreSQL, and Redis.
+
+**Quick Start:**
+- See [`docs/QUICK-START.md`](docs/QUICK-START.md) for a step-by-step checklist
+- See [`docs/IMMICH-INFRASTRUCTURE-SETUP.md`](docs/IMMICH-INFRASTRUCTURE-SETUP.md) for detailed documentation
+
+**What's included:**
+- NFS Subdir External Provisioner for dynamic storage provisioning
+- Storage classes: `nfs`, `nfs-rwx`, `nfs-rwo`
+- Pre-configured `immich` namespace
+- Ready for Immich/PostgreSQL/Redis deployment
+
+**To deploy the infrastructure:**
+```bash
+cd tal/01-apps
+tofu init
+tofu apply
+```
+
+This sets up storage but does NOT deploy the applications themselves. Deploy Immich separately using Helm, ArgoCD, or manual manifests.
 
 ## References
 
