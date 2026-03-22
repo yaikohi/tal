@@ -11,7 +11,12 @@ resource "helm_release" "argocd" {
       server = {
         service = {
           # This uses the Cilium L2 Announcement capabilities
-          type = "LoadBalancer"
+          type           = "LoadBalancer"
+          loadBalancerIP = "192.168.20.222"
+          annotations = {
+            # This tells Cilium to announce this specific IP via L2
+            "io.cilium/lb-ipam-ips" = "192.168.20.222"
+          }
         }
         # Disable TLS on the pod level so we don't deal with certs inside the pod for now
         extraArgs = ["--insecure"]

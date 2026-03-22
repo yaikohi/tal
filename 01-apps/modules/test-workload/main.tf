@@ -38,6 +38,7 @@ resource "kubernetes_service" "nginx" {
       target_port = 80
     }
     type = "LoadBalancer"
+    load_balancer_ip = "192.168.20.221"
   }
 }
 
