@@ -68,7 +68,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   }
 
   memory {
-    dedicated = each.value.type == "worker" ? 12 * 1024 : 8 * 1024
+    dedicated = each.value.type == "worker" ? 16 * 1024 : 12 * 1024
   }
 
   network_device {
