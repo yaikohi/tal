@@ -64,11 +64,11 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
 
   cpu {
     type  = "host"
-    cores = 4
+    cores = 8
   }
 
   memory {
-    dedicated = each.value.type == "worker" ? 8 * 1024 : 4 * 1024
+    dedicated = each.value.type == "worker" ? 12 * 1024 : 8 * 1024
   }
 
   network_device {

@@ -6,14 +6,10 @@ module "cilium" {
 
 # 2. Storage (NFS Provisioner)
 module "nfs_provisioner" {
-  source              = "./modules/nfs-provisioner"
-  nfs_server          = var.nfs_server
-  nfs_path            = var.nfs_path
-  storage_class_name  = "nfs"
-  set_default_class   = true
-  reclaim_policy      = "Retain"
-  archive_on_delete   = true
-  depends_on_cilium   = module.cilium
+  source            = "./modules/nfs-provisioner"
+  nfs_server        = var.nfs_server
+  nfs_path          = var.nfs_path
+  depends_on_cilium = module.cilium
 }
 
 # 3. GitOps (ArgoCD)

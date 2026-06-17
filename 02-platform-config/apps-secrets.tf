@@ -1,0 +1,93 @@
+########################################
+# Application secrets seeded into OpenBao KVv2 (apps/*).
+#
+# Per-app paths are read in-cluster by the External Secrets Operator
+# using the Kubernetes auth roles defined in kubernetes-auth.tf.
+########################################
+
+# ------------------------------------------------------------------
+# Homepage: ArgoCD API token for the read-only `homepagesa` account.
+# The argocd_account_token resource manages token lifecycle in ArgoCD
+# itself; the JWT is stored only in OpenBao, never as a K8s Secret in
+# git.
+# ------------------------------------------------------------------
+resource "argocd_account_token" "homepagesa" {
+  account = "homepagesa"
+  # No expires_in -> long-lived. Rotate by tainting this resource.
+}
+
+# ------------------------------------------------------------------
+# *arr API keys — auto-generated, written to OpenBao, consumed by:
+#   1. media-arr-api-keys Secret (init containers seed config.xml)
+#   2. apps/homepage Secret (homepage widgets)
+# Rotate any one by `tofu taint random_id.<name>_api_key && tofu apply`,
+# then restart the corresponding deployment.
+# ------------------------------------------------------------------
+resource "random_id" "radarr_api_key"   { byte_length = 16 }
+resource "random_id" "sonarr_api_key"   { byte_length = 16 }
+resource "random_id" "prowlarr_api_key" { byte_length = 16 }
+
+resource "vault_kv_secret_v2" "media_arr_keys" {
+  mount = vault_mount.kvv2.path
+  name  = "media/arr-keys"
+
+  data_json = jsonencode({
+    radarr-api-key   = random_id.radarr_api_key.hex
+    sonarr-api-key   = random_id.sonarr_api_key.hex
+    prowlarr-api-key = random_id.prowlarr_api_key.hex
+  })
+}
+
+# ------------------------------------------------------------------
+# Homepage secret — all env vars the homepage pod needs.
+# `HOMEPAGE_SERVICE_ACCOUNT_API_TOKEN` is kept for the existing
+# ArgoCD ServiceAccount lookup; `HOMEPAGE_VAR_*` are widget creds.
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "homepage" {
+  mount = vault_mount.kvv2.path
+  name  = "homepage"
+
+  data_json = jsonencode({
+    HOMEPAGE_SERVICE_ACCOUNT_API_TOKEN = argocd_account_token.homepagesa.jwt
+    HOMEPAGE_VAR_ARGOCD_KEY            = argocd_account_token.homepagesa.jwt
+    HOMEPAGE_VAR_RADARR_KEY            = random_id.radarr_api_key.hex
+    HOMEPAGE_VAR_SONARR_KEY            = random_id.sonarr_api_key.hex
+    HOMEPAGE_VAR_PROWLARR_KEY          = random_id.prowlarr_api_key.hex
+    HOMEPAGE_VAR_JELLYFIN_KEY          = var.jellyfin_api_key
+    HOMEPAGE_VAR_IMMICH_KEY            = var.immich_api_key
+    HOMEPAGE_VAR_QBIT_USERNAME         = var.qbit_username
+    HOMEPAGE_VAR_QBIT_PASSWORD         = var.qbit_password
+  })
+}
+
+# ------------------------------------------------------------------
+# Media downloader VPN credentials (consumed by gluetun in the media ns).
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "media_vpn" {
+  mount = vault_mount.kvv2.path
+  name  = "media/vpn"
+
+  data_json = jsonencode({
+    vpn-provider          = var.media_vpn_provider
+    wireguard-private-key = var.media_wireguard_private_key
+    wireguard-addresses   = var.media_wireguard_addresses
+  })
+}
+
+# ------------------------------------------------------------------
+# Immich DB credentials (shared by the postgres chart and the immich app).
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "immich_db" {
+  mount = vault_mount.kvv2.path
+  name  = "immich/db"
+
+  data_json = jsonencode({
+    # Bitnami postgres chart reads `password` when auth.existingSecret is set
+    # with auth.secretKeys.userPasswordKey=password.
+    password = var.immich_db_password
+    # Bitnami postgres superuser password key (adminPasswordKey default).
+    postgres-password = var.immich_db_password
+    # Immich reads DB_PASSWORD as an env var.
+    DB_PASSWORD = var.immich_db_password
+  })
+}
