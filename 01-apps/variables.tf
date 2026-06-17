@@ -5,13 +5,11 @@ variable "kubeconfig_path" {
 }
 
 variable "nfs_server" {
-  description = "NFS server IP address (Proxmox host)"
+  description = "NFS server IP address"
   type        = string
-  default     = "192.168.20.1"  # Your Proxmox host IP - verify with 'ip addr' on Proxmox
 }
 
 variable "nfs_path" {
-  description = "NFS export path on the server - verify with 'showmount -e localhost' on Proxmox"
+  description = "NFS export path — the provisioner creates a subdirectory per PVC under this path"
   type        = string
-  default     = "/mnt/nfs/kubernetes"  # Update this to match your actual NFS export path
 }
