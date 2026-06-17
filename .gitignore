@@ -17,7 +17,7 @@ secrets.yaml
 # State files (contain sensitive data about your infra)
 *.tfstate
 *.tfstate.backup
-
+**/.*.backup
 # Var files (if you ever use them locally)
 *.tfvars
 
@@ -48,3 +48,5 @@ repomix-output-*.xml
 
 # --- opentofu
 plan.out
+output.yaml
+*.backup
