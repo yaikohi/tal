@@ -53,7 +53,8 @@ controlPlane:
     customization:
       systemExtensions:
         officialExtensions:
-          - siderolabs/amd-ucode
+          - siderolabs/intel-ucode
+          - siderolabs/i915
           - siderolabs/qemu-guest-agent
           - siderolabs/util-linux-tools
           - siderolabs/nfs-utils
@@ -63,7 +64,8 @@ worker:
     customization:
       systemExtensions:
         officialExtensions:
-          - siderolabs/amd-ucode
+          - siderolabs/intel-ucode
+          - siderolabs/i915
           - siderolabs/qemu-guest-agent
           - siderolabs/util-linux-tools
           - siderolabs/nfs-utils

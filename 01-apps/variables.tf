@@ -13,3 +13,9 @@ variable "nfs_path" {
   description = "NFS export path — the provisioner creates a subdirectory per PVC under this path"
   type        = string
 }
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token used by cert-manager for DNS01 ACME challenges. Needs Zone:Read + DNS:Edit on the target zone."
+  type        = string
+  sensitive   = true
+}
