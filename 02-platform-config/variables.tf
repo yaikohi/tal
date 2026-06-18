@@ -4,6 +4,12 @@ variable "vault_root_token" {
   sensitive   = true
 }
 
+variable "vault_addr_override" {
+  type        = string
+  description = "Optional override for the Vault provider address. Use during bootstrap (e.g. with a kubectl port-forward) when bao.ykhi.xyz isn't reachable or routes to an uninitialized standby."
+  default     = null
+}
+
 variable "zitadel_client_id" {
   type        = string
   description = "The ZITADEL client ID (required)"

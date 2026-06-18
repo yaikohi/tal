@@ -83,6 +83,16 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
     type         = "4m"
   }
 
+  # --- GPU PASSTHROUGH (w-01 only) ---
+  dynamic "hostpci" {
+      for_each = each.key == "w-01" ? [1] : []
+      content {
+        device  = "hostpci0"
+        mapping = "intel-igpu"
+        pcie    = true
+        rombar  = false
+      }
+    }
   # --- ISO CONFIGURATION (Boot Drive) ---
   disk {
     file_id   = proxmox_virtual_environment_download_file.talos_iso.id

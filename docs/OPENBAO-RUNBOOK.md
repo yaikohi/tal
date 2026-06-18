@@ -8,6 +8,25 @@ This document covers day-0 init, the unseal procedure, and the workflow
 for adding a new application that consumes secrets via External Secrets
 Operator (ESO).
 
+> **After a full re-init / data wipe**, four manual steps are required
+> before the cluster is usable again — none of them happen automatically
+> from `tofu apply`:
+>
+> 1. `bao operator init` on `openbao-0` (section 1)
+> 2. Unseal `openbao-{0,1,2}` (section 2). Non-leader pods auto-join
+>    raft via `retry_join` in `charts/openbao/values.yaml`.
+> 3. `tofu apply` in `tal/02-platform-config` — re-seeds KVv2 mount,
+>    Kubernetes auth method, per-app policies/roles, KV secrets.
+>    During bootstrap when `bao.ykhi.xyz` round-robins into a sealed
+>    standby, override the provider address:
+>    ```sh
+>    kubectl -n openbao port-forward openbao-0 18200:8200 &
+>    tofu apply -var-file=secret.tfvars \
+>      -var "vault_addr_override=http://127.0.0.1:18200"
+>    ```
+> 4. `./bootstrap-oidc.sh` (section 3a) — restores the Zitadel OIDC
+>    auth method, which is not managed by Terraform.
+
 ---
 
 ## 1. Day-0: initialize the cluster

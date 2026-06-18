@@ -20,9 +20,13 @@ terraform {
 }
 
 provider "vault" {
-  # address = "http://127.0.0.1:8200" # Changed temporarily for the tunnel
-  address = "https://bao.ykhi.xyz"
-  token   = var.vault_root_token
+  # By default talks to `https://bao.ykhi.xyz` via the cluster's wildcard cert.
+  # During bootstrap (cert/HA not yet ready) override with VAULT_ADDR env, e.g.:
+  #   VAULT_ADDR=http://127.0.0.1:18200 tofu apply
+  # while running `kubectl -n openbao port-forward openbao-0 18200:8200`.
+  address         = coalesce(var.vault_addr_override, "https://bao.ykhi.xyz")
+  token           = var.vault_root_token
+  skip_tls_verify = true
 }
 
 provider "kubernetes" {

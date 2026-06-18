@@ -18,3 +18,8 @@ nfs_path = "/mnt/nfs/kubernetes"
 # Example: If your NFS export is different, update it here:
 # nfs_path = "/export/k8s"
 # nfs_path = "/mnt/storage/kubernetes"
+
+# Cloudflare API token for cert-manager DNS01 challenges.
+# Needs Zone:Read + DNS:Edit permissions on the target zone.
+# Create at: https://dash.cloudflare.com/profile/api-tokens
+cloudflare_api_token = "cfat_REPLACE_ME"
