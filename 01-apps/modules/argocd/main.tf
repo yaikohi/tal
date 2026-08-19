@@ -47,7 +47,7 @@ resource "helm_release" "argocd" {
             }
             syncPolicy = {
               automated = {
-                prune    = true
+                prune    = false
                 selfHeal = true
               }
               syncOptions = ["CreateNamespace=true"]
