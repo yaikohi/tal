@@ -41,7 +41,10 @@ resource "kubernetes_manifest" "cilium_l2_announcement_policy" {
     }
     spec = {
       loadBalancerIPs = true
-      interfaces      = ["ens18"]
+      # ens18 = Proxmox VM nodes' NIC; eno1 = bare-metal game-01's NIC. Both must be
+      # listed or L2 announcement (ARP) fails on nodes whose NIC isn't matched — e.g.
+      # the valheim LB IP wasn't reachable because its pod is pinned to game-01 (eno1).
+      interfaces      = ["ens18", "eno1"]
       nodeSelector = {
         matchExpressions = [
           {

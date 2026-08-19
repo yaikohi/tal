@@ -67,6 +67,21 @@ locals {
       service_account = "vault-auth"
       kv_subpath      = "immich"
     }
+    nats = {
+      namespace       = "nats"
+      service_account = "vault-auth"
+      kv_subpath      = "nats"
+    }
+    observability = {
+      namespace       = "observability"
+      service_account = "vault-auth"
+      kv_subpath      = "observability"
+    }
+    valheim = {
+      namespace       = "valheim"
+      service_account = "vault-auth"
+      kv_subpath      = "valheim"
+    }
   }
 }
 

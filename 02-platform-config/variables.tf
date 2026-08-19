@@ -95,3 +95,24 @@ variable "qbit_password" {
   sensitive   = true
   default     = "adminadmin"
 }
+
+variable "lidarr_api_key" {
+  type        = string
+  description = "Lidarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "sabnzbd_api_key" {
+  type        = string
+  description = "SABnzbd API key (Config > General > API Key, NOT the NZB key). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "seerr_api_key" {
+  type        = string
+  description = "Jellyseerr/Overseerr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}

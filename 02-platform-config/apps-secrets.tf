@@ -57,6 +57,9 @@ resource "vault_kv_secret_v2" "homepage" {
     HOMEPAGE_VAR_IMMICH_KEY            = var.immich_api_key
     HOMEPAGE_VAR_QBIT_USERNAME         = var.qbit_username
     HOMEPAGE_VAR_QBIT_PASSWORD         = var.qbit_password
+    HOMEPAGE_VAR_LIDARR_KEY            = var.lidarr_api_key
+    HOMEPAGE_VAR_SABNZBD_KEY           = var.sabnzbd_api_key
+    HOMEPAGE_VAR_SEERR_KEY             = var.seerr_api_key
   })
 }
 

@@ -11,7 +11,10 @@ locals {
     client_key         = local.talos_config.contexts[local.cluster_name].key
   }
 
-
+  # Only talconfig nodes that carry a machineSpec.vmid are Proxmox VMs that
+  # terraform manages. Bare-metal nodes (e.g. game-01) have no vmid and are
+  # applied/upgraded with talosctl directly, so they must be excluded here or
+  # tofu would try to create a phantom VM (vm_id = null) for them.
   nodes = {
     for node in local.talconfig.nodes : node.hostname => {
       ip          = node.ipAddress
@@ -20,6 +23,7 @@ locals {
       vm_id       = try(node.machineSpec.vmid, null)
       mac         = try(node.machineSpec.mac, null)
     }
+    if try(node.machineSpec.vmid, null) != null
   }
 }
 
@@ -58,6 +62,8 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
     trim    = true
   }
 
+
+
   operating_system {
     type = "l26"
   }
@@ -68,7 +74,7 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
   }
 
   memory {
-    dedicated = each.value.type == "worker" ? 16 * 1024 : 12 * 1024
+    dedicated = each.value.type == "worker" ? 20 * 1024 : 12 * 1024
   }
 
   network_device {
@@ -116,6 +122,13 @@ resource "proxmox_virtual_environment_vm" "talos_node" {
       }
     }
   }
+  lifecycle {
+        ignore_changes = [
+          disk[0].file_id,
+          vga,
+          kvm_arguments   # managed manually on the host; API user can't touch 'args'
+        ]
+    }
 }
 
 ################################################################################

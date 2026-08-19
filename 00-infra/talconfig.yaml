@@ -48,6 +48,34 @@ nodes:
       vmid: 6022
       mac: "BC:25:11:00:00:22"
 
+  # Bare-metal minipc (Ryzen 6900, 512GB NVMe) — dedicated gameserver node.
+  # No machineSpec.vmid => main.tf must skip it (see vmid-filter fix) so tofu
+  # never tries to create a Proxmox VM. Applied/upgraded with talosctl only.
+  - hostname: game-01
+    ipAddress: 192.168.20.31
+    controlPlane: false
+    installDisk: /dev/nvme0n1
+    machineSpec:
+      mode: metal
+      secureboot: false
+      mac: "58:47:CA:70:68:3A"   # eno1 — set UniFi DHCP reservation -> .31
+    schematic:
+      customization:
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/amd-ucode
+            - siderolabs/util-linux-tools
+            - siderolabs/nfs-utils
+    patches:
+      - |-
+        machine:
+          install:
+            wipe: true   # bare-metal disk still holds Proxmox LVM/ZFS sigs
+          nodeLabels:
+            ykhi.xyz/gameserver: "true"
+          nodeTaints:
+            dedicated: "gameserver:NoSchedule"
+
 controlPlane:
   schematic:
     customization:
