@@ -126,12 +126,31 @@ variable "zot_username" {
 
 variable "zot_password" {
   type        = string
-  description = "Zot push/pull password in plaintext (must be the password hashed into var.zot_htpasswd). Used to build dockerconfigjson pull secrets + `docker login`."
+  description = "Zot push/pull password in plaintext. The htpasswd hash is DERIVED from this via the htpasswd provider (see apps-secrets.tf) — nothing else to keep in sync."
   sensitive   = true
 }
 
-variable "zot_htpasswd" {
+# ---- agrelha (Valheim ops UI) ----
+variable "agrelha_codeberg_username" {
   type        = string
-  description = "htpasswd line for zot auth, e.g. output of `htpasswd -nbB ci '<password>'`. Must hash var.zot_password."
+  description = "Codeberg username/bot account agrelha commits mod/admin changes as."
+  sensitive   = true
+}
+
+variable "agrelha_codeberg_token" {
+  type        = string
+  description = "Codeberg application/access token (repo write scope on yaya-ops) used by agrelha to push to main."
+  sensitive   = true
+}
+
+variable "agrelha_oidc_client_id" {
+  type        = string
+  description = "Zitadel OIDC client ID for the agrelha web app."
+  sensitive   = true
+}
+
+variable "agrelha_oidc_client_secret" {
+  type        = string
+  description = "Zitadel OIDC client secret for the agrelha web app."
   sensitive   = true
 }

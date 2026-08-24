@@ -16,6 +16,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    htpasswd = {
+      source  = "loafoe/htpasswd"
+      version = "~> 2.1"
+    }
   }
 }
 
@@ -47,6 +51,6 @@ provider "argocd" {
   server_addr = var.argocd_server_addr
   username    = "admin"
   password    = var.argocd_password
-  plain_text = true # ArgoCD server runs with --insecure behind LAN-only LB
-  insecure   = true
+  plain_text  = true # ArgoCD server runs with --insecure behind LAN-only LB
+  insecure    = true
 }
