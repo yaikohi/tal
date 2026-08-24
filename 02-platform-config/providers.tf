@@ -47,7 +47,6 @@ provider "argocd" {
   server_addr = var.argocd_server_addr
   username    = "admin"
   password    = var.argocd_password
-  # password    = data.kubernetes_secret_v1.argocd_initial_admin.data["password"]
-  plain_text  = true # ArgoCD server runs with --insecure behind LAN-only LB
-  insecure    = true
+  plain_text = true # ArgoCD server runs with --insecure behind LAN-only LB
+  insecure   = true
 }

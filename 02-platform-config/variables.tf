@@ -59,7 +59,7 @@ variable "immich_db_password" {
 }
 
 variable "argocd_password" {
-  type = string
+  type        = string
   description = "Password for the ArgoCD admin account (used by the argocd provider)"
   sensitive   = true
 }
@@ -115,4 +115,23 @@ variable "seerr_api_key" {
   description = "Jellyseerr/Overseerr API key (Settings > General). Homepage widget cred."
   sensitive   = true
   default     = ""
+}
+
+variable "zot_username" {
+  type        = string
+  description = "Zot push/pull username (must match the user in var.zot_htpasswd)."
+  sensitive   = true
+  default     = "ci"
+}
+
+variable "zot_password" {
+  type        = string
+  description = "Zot push/pull password in plaintext (must be the password hashed into var.zot_htpasswd). Used to build dockerconfigjson pull secrets + `docker login`."
+  sensitive   = true
+}
+
+variable "zot_htpasswd" {
+  type        = string
+  description = "htpasswd line for zot auth, e.g. output of `htpasswd -nbB ci '<password>'`. Must hash var.zot_password."
+  sensitive   = true
 }
