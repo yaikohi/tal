@@ -40,7 +40,7 @@ resource "vault_kv_secret_v2" "media_arr_keys" {
     radarr-api-key   = random_id.radarr_api_key.hex
     sonarr-api-key   = random_id.sonarr_api_key.hex
     prowlarr-api-key = random_id.prowlarr_api_key.hex
-    lidarr-api-key = var.lidarr_api_key
+    lidarr-api-key   = var.lidarr_api_key
     jellyfin-api-key = var.jellyfin_api_key
     seerr-api-key    = var.seerr_api_key
   })
@@ -82,8 +82,8 @@ resource "vault_kv_secret_v2" "media_vpn" {
     vpn-provider          = var.media_vpn_provider
     wireguard-private-key = var.media_wireguard_private_key
     wireguard-addresses   = var.media_wireguard_addresses
-    qbit-webui-password = var.qbit_password
-    qbit-api-key = "unused"
+    qbit-webui-password   = var.qbit_password
+    qbit-api-key          = "unused"
   })
 }
 
@@ -93,18 +93,45 @@ resource "vault_kv_secret_v2" "media_vpn" {
 #   username/password -> the SAME credential in plaintext, for building a
 #     dockerconfigjson pull secret in consumer namespaces (e.g. agrelha) and for
 #     `docker login registry.ykhi.xyz` when pushing from the dev machine.
-# The htpasswd line MUST hash the same password stored in `password`. Generate it
-# once (deterministic, no bcrypt-per-apply churn):  htpasswd -nbB ci '<password>'
-# and set both var.zot_htpasswd and var.zot_password in secret.tfvars.
+# The htpasswd line is DERIVED from var.zot_password by the htpasswd provider —
+# single source of truth, so the hash and the plaintext can never drift (the bug
+# that 401'd the first login). Deterministic: unlike the built-in bcrypt(), this
+# provider salts once into state and does NOT re-hash every apply.
 # ------------------------------------------------------------------
+resource "htpasswd_password" "zot" {
+  password = var.zot_password
+}
+
 resource "vault_kv_secret_v2" "zot" {
   mount = vault_mount.kvv2.path
   name  = "zot"
 
   data_json = jsonencode({
-    htpasswd = var.zot_htpasswd
+    htpasswd = "${var.zot_username}:${htpasswd_password.zot.bcrypt}"
     username = var.zot_username
     password = var.zot_password
+  })
+}
+
+# ------------------------------------------------------------------
+# agrelha (Valheim ops UI) — consumed by the agrelha ns ExternalSecrets.
+#   codeberg-*     -> git push to yaya-ops main (declarative plane: mods/admins)
+#   oidc-*         -> in-app Zitadel auth
+#   registry-*     -> dockerconfigjson to pull agrelha's image from Zot.
+#                     Reuses the same `ci` creds as [[zot]] (var.zot_*) so the
+#                     registry password has a single source of truth.
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "agrelha" {
+  mount = vault_mount.kvv2.path
+  name  = "agrelha"
+
+  data_json = jsonencode({
+    codeberg-username  = var.agrelha_codeberg_username
+    codeberg-token     = var.agrelha_codeberg_token
+    oidc-client-id     = var.agrelha_oidc_client_id
+    oidc-client-secret = var.agrelha_oidc_client_secret
+    registry-username  = var.zot_username
+    registry-password  = var.zot_password
   })
 }
 
@@ -116,8 +143,8 @@ resource "vault_kv_secret_v2" "immich_db" {
   name  = "immich/db"
 
   data_json = jsonencode({
-    password = var.immich_db_password
+    password          = var.immich_db_password
     postgres-password = var.immich_db_password
-    DB_PASSWORD = var.immich_db_password
+    DB_PASSWORD       = var.immich_db_password
   })
 }
