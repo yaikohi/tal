@@ -17,14 +17,19 @@ resource "argocd_account_token" "homepagesa" {
 }
 
 # ------------------------------------------------------------------
-# *arr API keys — auto-generated, written to OpenBao, consumed by:
-#   1. media-arr-api-keys Secret (init containers seed config.xml)
+# *arr API keys — written to OpenBao, consumed by:
+#   1. media/arr-keys Secret (init containers seed config.xml; exportarr sidecars)
 #   2. apps/homepage Secret (homepage widgets)
-# Rotate any one by `tofu taint random_id.<name>_api_key && tofu apply`,
+# radarr/sonarr/prowlarr are auto-generated (random_id) and injected into the
+# apps. lidarr/jellyfin/seerr are sourced from the SAME vars the homepage secret
+# uses (below), so the value the media stack injects/scrapes matches the value
+# the homepage widget queries with. Keep these two resources in lock-step:
+# `media/arr-keys.<x> == homepage.HOMEPAGE_VAR_<X>`.
+# Rotate a generated key by `tofu taint random_id.<name>_api_key && tofu apply`,
 # then restart the corresponding deployment.
 # ------------------------------------------------------------------
-resource "random_id" "radarr_api_key"   { byte_length = 16 }
-resource "random_id" "sonarr_api_key"   { byte_length = 16 }
+resource "random_id" "radarr_api_key" { byte_length = 16 }
+resource "random_id" "sonarr_api_key" { byte_length = 16 }
 resource "random_id" "prowlarr_api_key" { byte_length = 16 }
 
 resource "vault_kv_secret_v2" "media_arr_keys" {
@@ -35,6 +40,9 @@ resource "vault_kv_secret_v2" "media_arr_keys" {
     radarr-api-key   = random_id.radarr_api_key.hex
     sonarr-api-key   = random_id.sonarr_api_key.hex
     prowlarr-api-key = random_id.prowlarr_api_key.hex
+    lidarr-api-key = var.lidarr_api_key
+    jellyfin-api-key = var.jellyfin_api_key
+    seerr-api-key    = var.seerr_api_key
   })
 }
 
@@ -74,6 +82,29 @@ resource "vault_kv_secret_v2" "media_vpn" {
     vpn-provider          = var.media_vpn_provider
     wireguard-private-key = var.media_wireguard_private_key
     wireguard-addresses   = var.media_wireguard_addresses
+    qbit-webui-password = var.qbit_password
+    qbit-api-key = "unused"
+  })
+}
+
+# ------------------------------------------------------------------
+# Zot self-hosted registry (registry.ykhi.xyz) credentials.
+#   htpasswd -> consumed by the zot pod's auth (yaya-ops zot-htpasswd ExternalSecret).
+#   username/password -> the SAME credential in plaintext, for building a
+#     dockerconfigjson pull secret in consumer namespaces (e.g. agrelha) and for
+#     `docker login registry.ykhi.xyz` when pushing from the dev machine.
+# The htpasswd line MUST hash the same password stored in `password`. Generate it
+# once (deterministic, no bcrypt-per-apply churn):  htpasswd -nbB ci '<password>'
+# and set both var.zot_htpasswd and var.zot_password in secret.tfvars.
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "zot" {
+  mount = vault_mount.kvv2.path
+  name  = "zot"
+
+  data_json = jsonencode({
+    htpasswd = var.zot_htpasswd
+    username = var.zot_username
+    password = var.zot_password
   })
 }
 
@@ -85,12 +116,8 @@ resource "vault_kv_secret_v2" "immich_db" {
   name  = "immich/db"
 
   data_json = jsonencode({
-    # Bitnami postgres chart reads `password` when auth.existingSecret is set
-    # with auth.secretKeys.userPasswordKey=password.
     password = var.immich_db_password
-    # Bitnami postgres superuser password key (adminPasswordKey default).
     postgres-password = var.immich_db_password
-    # Immich reads DB_PASSWORD as an env var.
     DB_PASSWORD = var.immich_db_password
   })
 }

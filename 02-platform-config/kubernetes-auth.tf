@@ -82,6 +82,11 @@ locals {
       service_account = "vault-auth"
       kv_subpath      = "valheim"
     }
+    zot = {
+      namespace       = "zot"
+      service_account = "vault-auth"
+      kv_subpath      = "zot"
+    }
   }
 }
 
