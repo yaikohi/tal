@@ -154,3 +154,15 @@ variable "agrelha_oidc_client_secret" {
   description = "Zitadel OIDC client secret for the agrelha web app."
   sensitive   = true
 }
+
+variable "zot_oidc_client_id" {
+  type        = string
+  description = "Zitadel OIDC client ID for the zot web app."
+  sensitive   = true
+}
+
+variable "zot_oidc_client_secret" {
+  type        = string
+  description = "Zitadel OIDC client secret for the zot web app."
+  sensitive   = true
+}
