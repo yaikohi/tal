@@ -110,6 +110,8 @@ resource "vault_kv_secret_v2" "zot" {
     htpasswd = "${var.zot_username}:${htpasswd_password.zot.bcrypt}"
     username = var.zot_username
     password = var.zot_password
+    oidc-client-id     = var.zot_oidc_client_id
+    oidc-client-secret = var.zot_oidc_client_secret
   })
 }
 
