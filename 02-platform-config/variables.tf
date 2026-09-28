@@ -143,6 +143,13 @@ variable "agrelha_codeberg_token" {
   sensitive   = true
 }
 
+variable "agrelha_curseforge_api_key" {
+  type        = string
+  description = "CurseForge API key. agrelha needs its own because CurseForge has no anonymous API: without it, CurseForge mod search and dependency resolution are simply absent and Modrinth carries on alone. The game servers do NOT use this - the itzg image ships its own key for downloads."
+  sensitive   = true
+  default     = ""
+}
+
 variable "agrelha_oidc_client_id" {
   type        = string
   description = "Zitadel OIDC client ID for the agrelha web app."
