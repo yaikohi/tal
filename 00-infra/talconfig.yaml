@@ -32,6 +32,15 @@ nodes:
       vmid: 6011
       mac: "BC:25:11:00:00:11"
 
+  # The passed-through Alder Lake-P iGPU has no VBIOS table in the guest, so i915
+  # cannot know there is no panel and probes the eDP/DDI encoder anyway. That
+  # probe times out after ~2s on a good boot and sometimes never terminates,
+  # hanging the node at ~2.7s of kernel time with qemu spinning at 195% CPU.
+  # This VM has a virtual VGA for its console and uses the iGPU only for media
+  # transcode, so the display engine is pure liability: turn it off. GuC/HuC and
+  # the render engine are unaffected, which is all Jellyfin's VAAPI needs.
+  # A node-level schematic REPLACES worker.schematic, so the extensions below
+  # are restated rather than inherited.
   - hostname: w-01
     ipAddress: 192.168.20.21
     controlPlane: false
@@ -39,6 +48,17 @@ nodes:
     machineSpec:
       vmid: 6021
       mac: "BC:25:11:00:00:21"
+    schematic:
+      customization:
+        extraKernelArgs:
+          - i915.disable_display=1
+        systemExtensions:
+          officialExtensions:
+            - siderolabs/intel-ucode
+            - siderolabs/i915
+            - siderolabs/qemu-guest-agent
+            - siderolabs/util-linux-tools
+            - siderolabs/nfs-utils
 
   - hostname: w-02
     ipAddress: 192.168.20.22

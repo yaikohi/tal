@@ -118,6 +118,9 @@ resource "vault_kv_secret_v2" "zot" {
 # ------------------------------------------------------------------
 # agrelha (Valheim ops UI) — consumed by the agrelha ns ExternalSecrets.
 #   codeberg-*     -> git push to yaya-ops main (declarative plane: mods/admins)
+#   curseforge-*   -> agrelha's own CurseForge API key (search + dependency
+#                     resolution). NOT used by the game servers, which rely on
+#                     the key baked into the itzg image for downloads.
 #   oidc-*         -> in-app Zitadel auth
 #   registry-*     -> dockerconfigjson to pull agrelha's image from Zot.
 #                     Reuses the same `ci` creds as [[zot]] (var.zot_*) so the
@@ -130,10 +133,33 @@ resource "vault_kv_secret_v2" "agrelha" {
   data_json = jsonencode({
     codeberg-username  = var.agrelha_codeberg_username
     codeberg-token     = var.agrelha_codeberg_token
+    curseforge-api-key = var.agrelha_curseforge_api_key
     oidc-client-id     = var.agrelha_oidc_client_id
     oidc-client-secret = var.agrelha_oidc_client_secret
     registry-username  = var.zot_username
     registry-password  = var.zot_password
+  })
+}
+
+# ------------------------------------------------------------------
+# Zot pull creds for the valheim namespace — the Valheim pods run agrelha's
+# image as an init container (BepInEx config merge), so they need their own
+# imagePullSecret. Same `ci` creds as [[zot]]/[[agrelha]] (var.zot_*), so the
+# registry password still has one source of truth.
+#
+# A SUBPATH, not `valheim`: the OpenBao role `valheim` is granted
+# apps/data/valheim AND apps/data/valheim/*, so this is readable as-is with no
+# policy change. `apps/valheim` itself (server_password) was seeded by hand and
+# is not managed here — declaring it would overwrite that key and take both
+# worlds down. Mirrors the `immich/db` subpath below.
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "valheim_registry" {
+  mount = vault_mount.kvv2.path
+  name  = "valheim/registry"
+
+  data_json = jsonencode({
+    registry-username = var.zot_username
+    registry-password = var.zot_password
   })
 }
 
