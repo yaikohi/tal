@@ -107,9 +107,9 @@ resource "vault_kv_secret_v2" "zot" {
   name  = "zot"
 
   data_json = jsonencode({
-    htpasswd = "${var.zot_username}:${htpasswd_password.zot.bcrypt}"
-    username = var.zot_username
-    password = var.zot_password
+    htpasswd           = "${var.zot_username}:${htpasswd_password.zot.bcrypt}"
+    username           = var.zot_username
+    password           = var.zot_password
     oidc-client-id     = var.zot_oidc_client_id
     oidc-client-secret = var.zot_oidc_client_secret
   })
@@ -131,13 +131,14 @@ resource "vault_kv_secret_v2" "agrelha" {
   name  = "agrelha"
 
   data_json = jsonencode({
-    codeberg-username  = var.agrelha_codeberg_username
-    codeberg-token     = var.agrelha_codeberg_token
-    curseforge-api-key = var.agrelha_curseforge_api_key
-    oidc-client-id     = var.agrelha_oidc_client_id
-    oidc-client-secret = var.agrelha_oidc_client_secret
-    registry-username  = var.zot_username
-    registry-password  = var.zot_password
+    codeberg-username   = var.agrelha_codeberg_username
+    codeberg-token      = var.agrelha_codeberg_token
+    curseforge-api-key  = var.agrelha_curseforge_api_key
+    oidc-client-id      = var.agrelha_oidc_client_id
+    oidc-client-secret  = var.agrelha_oidc_client_secret
+    zitadel-service-key = var.agrelha_zitadel_service_key
+    registry-username   = var.zot_username
+    registry-password   = var.zot_password
   })
 }
 

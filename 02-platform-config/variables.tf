@@ -103,6 +103,34 @@ variable "lidarr_api_key" {
   default     = ""
 }
 
+variable "argocd_api_key" {
+  type        = string
+  description = "ArgoCD API key (Admin Dashboard > API Keys). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "radarr_api_key" {
+  type        = string
+  description = "Radarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "sonarr_api_key" {
+  type        = string
+  description = "Sonarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "prowlarr_api_key" {
+  type        = string
+  description = "Prowlarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
 variable "sabnzbd_api_key" {
   type        = string
   description = "SABnzbd API key (Config > General > API Key, NOT the NZB key). Homepage widget cred."
@@ -160,6 +188,13 @@ variable "agrelha_oidc_client_secret" {
   type        = string
   description = "Zitadel OIDC client secret for the agrelha web app."
   sensitive   = true
+}
+
+variable "agrelha_zitadel_service_key" {
+  type        = string
+  description = "Zitadel service-user JWT profile key (the whole key JSON, with keyId/userId/key) that agrelha uses to mint and retire one project role per instance. Scoped to the agrelha project only. Empty disables role minting and granting."
+  sensitive   = true
+  default     = ""
 }
 
 variable "zot_oidc_client_id" {
