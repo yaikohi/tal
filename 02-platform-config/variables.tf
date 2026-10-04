@@ -197,6 +197,13 @@ variable "agrelha_zitadel_service_key" {
   default     = ""
 }
 
+variable "gmod_steam_web_api_key" {
+  type        = string
+  description = "Steam Web API key shared by every Garry's Mod world, passed to srcds as -authkey. Without it +host_workshop_collection cannot resolve the collection and the world boots with no addons. Empty keeps the OpenBao property present (ESO needs it to exist) while leaving the servers unauthenticated."
+  sensitive   = true
+  default     = ""
+}
+
 variable "zot_oidc_client_id" {
   type        = string
   description = "Zitadel OIDC client ID for the zot web app."

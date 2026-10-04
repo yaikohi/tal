@@ -142,6 +142,15 @@ resource "vault_kv_secret_v2" "agrelha" {
   })
 }
 
+resource "vault_kv_secret_v2" "gmod" {
+  mount = vault_mount.kvv2.path
+  name  = "gmod"
+
+  data_json = jsonencode({
+    steam-web-api-key = var.gmod_steam_web_api_key
+  })
+}
+
 # ------------------------------------------------------------------
 # Zot pull creds for the valheim namespace — the Valheim pods run agrelha's
 # image as an init container (BepInEx config merge), so they need their own

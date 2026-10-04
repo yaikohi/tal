@@ -92,6 +92,11 @@ locals {
       service_account = "vault-auth"
       kv_subpath      = "agrelha"
     }
+    gmod = {
+      namespace       = "gmod"
+      service_account = "vault-auth"
+      kv_subpath      = "gmod"
+    }
   }
 }
 
