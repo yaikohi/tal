@@ -139,6 +139,7 @@ resource "vault_kv_secret_v2" "agrelha" {
     zitadel-service-key = var.agrelha_zitadel_service_key
     registry-username   = var.zot_username
     registry-password   = var.zot_password
+    cloudflare-api-token = var.agrelha_cloudflare_api_token
   })
 }
 
