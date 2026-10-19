@@ -215,3 +215,10 @@ variable "zot_oidc_client_secret" {
   description = "Zitadel OIDC client secret for the zot web app."
   sensitive   = true
 }
+
+variable "agrelha_cloudflare_api_token" {
+  type        = string
+  description = "Cloudflare API token scoped to ykhi.xyz (Zone:Read + DNS:Edit) for Caddy DNS-01 on fogo."
+  sensitive   = true
+  default     = ""
+}
