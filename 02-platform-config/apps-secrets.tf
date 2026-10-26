@@ -140,6 +140,7 @@ resource "vault_kv_secret_v2" "agrelha" {
     registry-username   = var.zot_username
     registry-password   = var.zot_password
     cloudflare-api-token = var.agrelha_cloudflare_api_token
+    influxdb-host-token  = var.agrelha_influxdb_host_token
   })
 }
 
@@ -185,5 +186,20 @@ resource "vault_kv_secret_v2" "immich_db" {
     password          = var.immich_db_password
     postgres-password = var.immich_db_password
     DB_PASSWORD       = var.immich_db_password
+  })
+}
+
+resource "htpasswd_password" "loki_push" {
+  password = var.loki_push_password
+}
+
+resource "vault_kv_secret_v2" "observability_loki_push" {
+  mount = vault_mount.kvv2.path
+  name  = "observability/loki-push"
+
+  data_json = jsonencode({
+    htpasswd = "${var.loki_push_username}:${htpasswd_password.loki_push.bcrypt}"
+    username = var.loki_push_username
+    password = var.loki_push_password
   })
 }

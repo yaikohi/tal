@@ -222,3 +222,23 @@ variable "agrelha_cloudflare_api_token" {
   sensitive   = true
   default     = ""
 }
+
+variable "agrelha_influxdb_host_token" {
+  type        = string
+  description = "InfluxDB v2 token for host-side Telegraf collectors (fogo, and the nas later). Write-only on bucket `metrics` in org `homelab` - deliberately NOT the admin token, which can read and delete the multi-year `tasmota` bucket. Created by hand in InfluxDB; tokens and buckets are not GitOps in this stack."
+  sensitive   = true
+  default     = ""
+}
+
+variable "loki_push_username" {
+  type        = string
+  description = "Basic-auth username for Loki's exposed push endpoint (loki.ykhi.xyz/loki/api/v1/push), used by collectors outside the cluster."
+  sensitive   = true
+  default     = "collector"
+}
+
+variable "loki_push_password" {
+  type        = string
+  description = "Basic-auth password for Loki's push endpoint in plaintext. The htpasswd hash is DERIVED from this via the htpasswd provider (see apps-secrets.tf), so the hash Traefik checks and the plaintext fogo sends can never drift."
+  sensitive   = true
+}
