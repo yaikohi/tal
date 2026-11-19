@@ -4,6 +4,12 @@ variable "vault_root_token" {
   sensitive   = true
 }
 
+variable "vault_addr_override" {
+  type        = string
+  description = "Optional override for the Vault provider address. Use during bootstrap (e.g. with a kubectl port-forward) when bao.ykhi.xyz isn't reachable or routes to an uninitialized standby."
+  default     = null
+}
+
 variable "zitadel_client_id" {
   type        = string
   description = "The ZITADEL client ID (required)"
@@ -53,7 +59,7 @@ variable "immich_db_password" {
 }
 
 variable "argocd_password" {
-  type = string
+  type        = string
   description = "Password for the ArgoCD admin account (used by the argocd provider)"
   sensitive   = true
 }
@@ -88,4 +94,151 @@ variable "qbit_password" {
   description = "qBittorrent WebUI password"
   sensitive   = true
   default     = "adminadmin"
+}
+
+variable "lidarr_api_key" {
+  type        = string
+  description = "Lidarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "argocd_api_key" {
+  type        = string
+  description = "ArgoCD API key (Admin Dashboard > API Keys). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "radarr_api_key" {
+  type        = string
+  description = "Radarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "sonarr_api_key" {
+  type        = string
+  description = "Sonarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "prowlarr_api_key" {
+  type        = string
+  description = "Prowlarr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "sabnzbd_api_key" {
+  type        = string
+  description = "SABnzbd API key (Config > General > API Key, NOT the NZB key). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "seerr_api_key" {
+  type        = string
+  description = "Jellyseerr/Overseerr API key (Settings > General). Homepage widget cred."
+  sensitive   = true
+  default     = ""
+}
+
+variable "zot_username" {
+  type        = string
+  description = "Zot push/pull username (must match the user in var.zot_htpasswd)."
+  sensitive   = true
+  default     = "ci"
+}
+
+variable "zot_password" {
+  type        = string
+  description = "Zot push/pull password in plaintext. The htpasswd hash is DERIVED from this via the htpasswd provider (see apps-secrets.tf) — nothing else to keep in sync."
+  sensitive   = true
+}
+
+# ---- agrelha (Valheim ops UI) ----
+variable "agrelha_codeberg_username" {
+  type        = string
+  description = "Codeberg username/bot account agrelha commits mod/admin changes as."
+  sensitive   = true
+}
+
+variable "agrelha_codeberg_token" {
+  type        = string
+  description = "Codeberg application/access token (repo write scope on yaya-ops) used by agrelha to push to main."
+  sensitive   = true
+}
+
+variable "agrelha_curseforge_api_key" {
+  type        = string
+  description = "CurseForge API key. agrelha needs its own because CurseForge has no anonymous API: without it, CurseForge mod search and dependency resolution are simply absent and Modrinth carries on alone. The game servers do NOT use this - the itzg image ships its own key for downloads."
+  sensitive   = true
+  default     = ""
+}
+
+variable "agrelha_oidc_client_id" {
+  type        = string
+  description = "Zitadel OIDC client ID for the agrelha web app."
+  sensitive   = true
+}
+
+variable "agrelha_oidc_client_secret" {
+  type        = string
+  description = "Zitadel OIDC client secret for the agrelha web app."
+  sensitive   = true
+}
+
+variable "agrelha_zitadel_service_key" {
+  type        = string
+  description = "Zitadel service-user JWT profile key (the whole key JSON, with keyId/userId/key) that agrelha uses to mint and retire one project role per instance. Scoped to the agrelha project only. Empty disables role minting and granting."
+  sensitive   = true
+  default     = ""
+}
+
+variable "gmod_steam_web_api_key" {
+  type        = string
+  description = "Steam Web API key shared by every Garry's Mod world, passed to srcds as -authkey. Without it +host_workshop_collection cannot resolve the collection and the world boots with no addons. Empty keeps the OpenBao property present (ESO needs it to exist) while leaving the servers unauthenticated."
+  sensitive   = true
+  default     = ""
+}
+
+variable "zot_oidc_client_id" {
+  type        = string
+  description = "Zitadel OIDC client ID for the zot web app."
+  sensitive   = true
+}
+
+variable "zot_oidc_client_secret" {
+  type        = string
+  description = "Zitadel OIDC client secret for the zot web app."
+  sensitive   = true
+}
+
+variable "agrelha_cloudflare_api_token" {
+  type        = string
+  description = "Cloudflare API token scoped to ykhi.xyz (Zone:Read + DNS:Edit) for Caddy DNS-01 on fogo."
+  sensitive   = true
+  default     = ""
+}
+
+variable "agrelha_influxdb_host_token" {
+  type        = string
+  description = "InfluxDB v2 token for host-side Telegraf collectors (fogo, and the nas later). Write-only on bucket `metrics` in org `homelab` - deliberately NOT the admin token, which can read and delete the multi-year `tasmota` bucket. Created by hand in InfluxDB; tokens and buckets are not GitOps in this stack."
+  sensitive   = true
+  default     = ""
+}
+
+variable "loki_push_username" {
+  type        = string
+  description = "Basic-auth username for Loki's exposed push endpoint (loki.ykhi.xyz/loki/api/v1/push), used by collectors outside the cluster."
+  sensitive   = true
+  default     = "collector"
+}
+
+variable "loki_push_password" {
+  type        = string
+  description = "Basic-auth password for Loki's push endpoint in plaintext. The htpasswd hash is DERIVED from this via the htpasswd provider (see apps-secrets.tf), so the hash Traefik checks and the plaintext fogo sends can never drift."
+  sensitive   = true
 }

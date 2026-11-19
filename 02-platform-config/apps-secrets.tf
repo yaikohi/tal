@@ -17,14 +17,19 @@ resource "argocd_account_token" "homepagesa" {
 }
 
 # ------------------------------------------------------------------
-# *arr API keys — auto-generated, written to OpenBao, consumed by:
-#   1. media-arr-api-keys Secret (init containers seed config.xml)
+# *arr API keys — written to OpenBao, consumed by:
+#   1. media/arr-keys Secret (init containers seed config.xml; exportarr sidecars)
 #   2. apps/homepage Secret (homepage widgets)
-# Rotate any one by `tofu taint random_id.<name>_api_key && tofu apply`,
+# radarr/sonarr/prowlarr are auto-generated (random_id) and injected into the
+# apps. lidarr/jellyfin/seerr are sourced from the SAME vars the homepage secret
+# uses (below), so the value the media stack injects/scrapes matches the value
+# the homepage widget queries with. Keep these two resources in lock-step:
+# `media/arr-keys.<x> == homepage.HOMEPAGE_VAR_<X>`.
+# Rotate a generated key by `tofu taint random_id.<name>_api_key && tofu apply`,
 # then restart the corresponding deployment.
 # ------------------------------------------------------------------
-resource "random_id" "radarr_api_key"   { byte_length = 16 }
-resource "random_id" "sonarr_api_key"   { byte_length = 16 }
+resource "random_id" "radarr_api_key" { byte_length = 16 }
+resource "random_id" "sonarr_api_key" { byte_length = 16 }
 resource "random_id" "prowlarr_api_key" { byte_length = 16 }
 
 resource "vault_kv_secret_v2" "media_arr_keys" {
@@ -35,6 +40,9 @@ resource "vault_kv_secret_v2" "media_arr_keys" {
     radarr-api-key   = random_id.radarr_api_key.hex
     sonarr-api-key   = random_id.sonarr_api_key.hex
     prowlarr-api-key = random_id.prowlarr_api_key.hex
+    lidarr-api-key   = var.lidarr_api_key
+    jellyfin-api-key = var.jellyfin_api_key
+    seerr-api-key    = var.seerr_api_key
   })
 }
 
@@ -57,6 +65,9 @@ resource "vault_kv_secret_v2" "homepage" {
     HOMEPAGE_VAR_IMMICH_KEY            = var.immich_api_key
     HOMEPAGE_VAR_QBIT_USERNAME         = var.qbit_username
     HOMEPAGE_VAR_QBIT_PASSWORD         = var.qbit_password
+    HOMEPAGE_VAR_LIDARR_KEY            = var.lidarr_api_key
+    HOMEPAGE_VAR_SABNZBD_KEY           = var.sabnzbd_api_key
+    HOMEPAGE_VAR_SEERR_KEY             = var.seerr_api_key
   })
 }
 
@@ -71,6 +82,96 @@ resource "vault_kv_secret_v2" "media_vpn" {
     vpn-provider          = var.media_vpn_provider
     wireguard-private-key = var.media_wireguard_private_key
     wireguard-addresses   = var.media_wireguard_addresses
+    qbit-webui-password   = var.qbit_password
+    qbit-api-key          = "unused"
+  })
+}
+
+# ------------------------------------------------------------------
+# Zot self-hosted registry (registry.ykhi.xyz) credentials.
+#   htpasswd -> consumed by the zot pod's auth (yaya-ops zot-htpasswd ExternalSecret).
+#   username/password -> the SAME credential in plaintext, for building a
+#     dockerconfigjson pull secret in consumer namespaces (e.g. agrelha) and for
+#     `docker login registry.ykhi.xyz` when pushing from the dev machine.
+# The htpasswd line is DERIVED from var.zot_password by the htpasswd provider —
+# single source of truth, so the hash and the plaintext can never drift (the bug
+# that 401'd the first login). Deterministic: unlike the built-in bcrypt(), this
+# provider salts once into state and does NOT re-hash every apply.
+# ------------------------------------------------------------------
+resource "htpasswd_password" "zot" {
+  password = var.zot_password
+}
+
+resource "vault_kv_secret_v2" "zot" {
+  mount = vault_mount.kvv2.path
+  name  = "zot"
+
+  data_json = jsonencode({
+    htpasswd           = "${var.zot_username}:${htpasswd_password.zot.bcrypt}"
+    username           = var.zot_username
+    password           = var.zot_password
+    oidc-client-id     = var.zot_oidc_client_id
+    oidc-client-secret = var.zot_oidc_client_secret
+  })
+}
+
+# ------------------------------------------------------------------
+# agrelha (Valheim ops UI) — consumed by the agrelha ns ExternalSecrets.
+#   codeberg-*     -> git push to yaya-ops main (declarative plane: mods/admins)
+#   curseforge-*   -> agrelha's own CurseForge API key (search + dependency
+#                     resolution). NOT used by the game servers, which rely on
+#                     the key baked into the itzg image for downloads.
+#   oidc-*         -> in-app Zitadel auth
+#   registry-*     -> dockerconfigjson to pull agrelha's image from Zot.
+#                     Reuses the same `ci` creds as [[zot]] (var.zot_*) so the
+#                     registry password has a single source of truth.
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "agrelha" {
+  mount = vault_mount.kvv2.path
+  name  = "agrelha"
+
+  data_json = jsonencode({
+    codeberg-username   = var.agrelha_codeberg_username
+    codeberg-token      = var.agrelha_codeberg_token
+    curseforge-api-key  = var.agrelha_curseforge_api_key
+    oidc-client-id      = var.agrelha_oidc_client_id
+    oidc-client-secret  = var.agrelha_oidc_client_secret
+    zitadel-service-key = var.agrelha_zitadel_service_key
+    registry-username   = var.zot_username
+    registry-password   = var.zot_password
+    cloudflare-api-token = var.agrelha_cloudflare_api_token
+    influxdb-host-token  = var.agrelha_influxdb_host_token
+  })
+}
+
+resource "vault_kv_secret_v2" "gmod" {
+  mount = vault_mount.kvv2.path
+  name  = "gmod"
+
+  data_json = jsonencode({
+    steam-web-api-key = var.gmod_steam_web_api_key
+  })
+}
+
+# ------------------------------------------------------------------
+# Zot pull creds for the valheim namespace — the Valheim pods run agrelha's
+# image as an init container (BepInEx config merge), so they need their own
+# imagePullSecret. Same `ci` creds as [[zot]]/[[agrelha]] (var.zot_*), so the
+# registry password still has one source of truth.
+#
+# A SUBPATH, not `valheim`: the OpenBao role `valheim` is granted
+# apps/data/valheim AND apps/data/valheim/*, so this is readable as-is with no
+# policy change. `apps/valheim` itself (server_password) was seeded by hand and
+# is not managed here — declaring it would overwrite that key and take both
+# worlds down. Mirrors the `immich/db` subpath below.
+# ------------------------------------------------------------------
+resource "vault_kv_secret_v2" "valheim_registry" {
+  mount = vault_mount.kvv2.path
+  name  = "valheim/registry"
+
+  data_json = jsonencode({
+    registry-username = var.zot_username
+    registry-password = var.zot_password
   })
 }
 
@@ -82,12 +183,23 @@ resource "vault_kv_secret_v2" "immich_db" {
   name  = "immich/db"
 
   data_json = jsonencode({
-    # Bitnami postgres chart reads `password` when auth.existingSecret is set
-    # with auth.secretKeys.userPasswordKey=password.
-    password = var.immich_db_password
-    # Bitnami postgres superuser password key (adminPasswordKey default).
+    password          = var.immich_db_password
     postgres-password = var.immich_db_password
-    # Immich reads DB_PASSWORD as an env var.
-    DB_PASSWORD = var.immich_db_password
+    DB_PASSWORD       = var.immich_db_password
+  })
+}
+
+resource "htpasswd_password" "loki_push" {
+  password = var.loki_push_password
+}
+
+resource "vault_kv_secret_v2" "observability_loki_push" {
+  mount = vault_mount.kvv2.path
+  name  = "observability/loki-push"
+
+  data_json = jsonencode({
+    htpasswd = "${var.loki_push_username}:${htpasswd_password.loki_push.bcrypt}"
+    username = var.loki_push_username
+    password = var.loki_push_password
   })
 }
